@@ -51,11 +51,5 @@ python source/analysis_runner_weighted_split_torch.py
 The script will train the LSTM model using the generated features and produce predictions for sleep stages.
 
 
-## Output
-The output includes the predictions for the input data.
-
-## Notes
-- Make sure the input files in `data/raw_data/` are correctly formatted before running the preprocessing scripts.
-
 
 
