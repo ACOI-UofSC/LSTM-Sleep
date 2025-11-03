@@ -64,15 +64,45 @@ def summarize_labeled(filenames):
 def process_each_file(files):
     file_start_time = time.time()
     sub_id = files.split('.')[0]
-
+    print(os.path.join(save_path, source, 'heart_rate', sub_id + '_heart_rate.csv'))
+    if os.path.exists(os.path.join(save_path, source, 'heart_rate', sub_id + '_heart_rate.csv')):
+        return
     df = pd.read_csv(os.path.join(data_path, files))
+
+    upper_source = str.upper(source[0]) + source[1:]
+    df.rename(columns={'PSG Time': 'psgtime', 'PSG Stg': 'psgstg'}, inplace=True)
+    df.rename(columns={f'{upper_source} Time': f'{source}time', f'{upper_source} X': f'{source}x',
+                       f'{upper_source} Y': f'{source}y', f'{upper_source} Z': f'{source}z',
+                       f'{upper_source} Magnitude': f'{source}magnitude',
+                       f'{upper_source} ENMO': f'{source}enmo',
+                       f'{upper_source} Heart Rate': f'{source}heartrate',
+                       f'Kubios Time': 'kubiostime', 'Kubios Medium Mean HR': 'kubiosmediummeanhr'},
+              inplace=True)
+    if all(column in df.columns for column in ['time', 'stg']):
+        df.rename(columns={'time': 'psgtime', 'stg': 'psgstg'}, inplace=True)
+
+
+    if source == 'actigraph':
+        check_columns = [source + 'time', source + 'x', source + 'y', source + 'z',
+                        source + 'magnitude', source + 'enmo', 'kubiostime', 
+                        'kubiosmediummeanhr','psgtime', 'psgstg']
+    else:
+        check_columns = [source + 'time', source + 'x', source + 'y', source + 'z',
+                        source + 'magnitude', source + 'enmo', source + 'heartrate'
+                        ,'psgtime', 'psgstg']
+
+    if not all(column in df.columns for column in check_columns):
+        return
 
     source_data = df.loc[:, [source + 'time', source + 'x', source + 'y', source + 'z',
                              source + 'magnitude', source + 'enmo']].dropna()
     if len(source_data) == 0:
         return
 
-    hr_data = df.loc[:, [source + 'time', source + 'heartrate']].dropna()
+    if source == 'actigraph':
+        hr_data = df.loc[:, ['kubiostime', 'kubiosmediummeanhr']].dropna()
+    else:
+        hr_data = df.loc[:, [source + 'time', source + 'heartrate']].dropna()
     if len(hr_data) == 0:
         return
 
@@ -102,16 +132,19 @@ def process_each_file(files):
                    'timestamp']]
     source_data.to_csv(os.path.join(save_path, source, 'motion', sub_id + '_motion.csv'), index=False)
 
-    if '.' in hr_data[source + 'time'].iloc[0]:
-        hr_data['timestamp'] = hr_data[source + 'time'].apply(lambda x: trans_to_timestamp(x))
+    hr_time_column = source + 'time' if source != 'actigraph' else 'kubiostime'
+    hr_heartrate_column = source + 'heartrate' if source != 'actigraph' else 'kubiosmediummeanhr'
+    save_time_column = source + 'Time' if source != 'actigraph' else 'kubios' + 'Time'
+    if '.' in hr_data[hr_time_column].iloc[0]:
+        hr_data['timestamp'] = hr_data[hr_time_column].apply(lambda x: trans_to_timestamp(x))
     else:
-        hr_data['timestamp'] = hr_data[source + 'time'].apply(
+        hr_data['timestamp'] = hr_data[hr_time_column].apply(
             lambda x: int(time.mktime(time.strptime(x, "%Y-%m-%d %H:%M:%S"))))
         hr_data['timestamp'] = add_milliseconds(pd.DataFrame(hr_data['timestamp']))
 
-    hr_data[source + 'Time'] = hr_data['timestamp'].apply(lambda x: x - start_time)
+    hr_data[save_time_column] = hr_data['timestamp'].apply(lambda x: x - start_time)
     os.makedirs(os.path.join(save_path, source, 'heart_rate'), exist_ok=True)
-    hr_data = hr_data.loc[:, [source + 'Time', source + 'heartrate', 'timestamp']]
+    hr_data = hr_data.loc[:, [save_time_column, hr_heartrate_column, 'timestamp']]
     hr_data.to_csv(os.path.join(save_path, source, 'heart_rate', sub_id + '_heart_rate.csv'),
                    index=False)
     end_time = time.time()
@@ -122,10 +155,12 @@ def process_each_file(files):
 if __name__ == '__main__':
     data_path = '../data/raw_data'
     save_path = '../data/data_processed/'
-    raw_filenames = os.listdir(data_path)
-    # parallel = Parallel(n_jobs=-1)
-    # #
-    # all_results = parallel(
-    #     delayed(process_each_file)(i) for i in raw_filenames)
-
-    [process_each_file(i) for i in raw_filenames]
+    if source == 'actigraph':
+        raw_filenames = [f for f in os.listdir(data_path) if f.endswith('.csv')]
+    else:
+        ids = pd.read_csv(f'../data/{source}_ids.csv')['subject'].tolist()
+        ids = [str(i) for i in ids]
+        raw_filenames = [f for f in os.listdir(data_path) if f.split('.')[0] in ids]
+    parallel = Parallel(n_jobs=os.cpu_count() - 2)
+    print(f"Processing {len(raw_filenames)} files")
+    all_results = parallel(delayed(process_each_file)(i) for i in raw_filenames)
