@@ -25,11 +25,18 @@ class FeatureBuilder(object):
     @staticmethod
     def build(subject_id):
         if Constants.VERBOSE:
-            print("Getting valid epochs...")
-        valid_epochs = RawDataProcessor.get_valid_epochs(subject_id)[:-1]
+            print(f"{subject_id} Getting valid epochs...")
 
+        a = HeartRateFeatureService.get_path(subject_id,30)
+        if a.exists():
+            print(f"{subject_id} skip")
+            return
+        valid_epochs = RawDataProcessor.get_valid_epochs(subject_id)[:-1]
+        if len(valid_epochs) < 200:
+            print(f'remove {subject_id} valid_epochs: {len(valid_epochs)}')
+            return None
         if Constants.VERBOSE:
-            print("Building features...")
+            print(f"{subject_id} Building features...")
         FeatureBuilder.build_labels(subject_id, valid_epochs)
         FeatureBuilder.build_from_wearables(subject_id, valid_epochs)
 
@@ -51,4 +58,6 @@ class FeatureBuilder(object):
         MotionFFTFeatureService.write_dir_fft(subject_id, motion_zfft30_feature, 'z', '1-30')
         MotionFFTFeatureService.write_vmfft(subject_id, motion_vmfft30_feature, '1-30')
         HeartRateFeatureService.write(subject_id, heart_rate_feature, 30)
+
+        
         
