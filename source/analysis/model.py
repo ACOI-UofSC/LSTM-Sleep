@@ -43,7 +43,7 @@ class LocalGlobalLSTM(nn.Module):
 
 
 class Trainer:
-    def __init__(self, model, num_epochs=3, class_weight=None, device='cpu'):
+    def __init__(self, model, num_epochs=300, class_weight=None, device='cpu'):
         self.batch_size = 5
         self.model = model
         self.criterion = nn.CrossEntropyLoss(reduction='none')
