@@ -13,13 +13,12 @@ class Constants(object):
     SECONDS_PER_HOUR = 3600
     VERBOSE = True
 
-    # AGV = actigraphy-only pipeline (no heart rate)
+    # AGV = actigraphy-only pipeline
     DEVICE = 'agv'
 
     # AGV_DATA_DIR is set by run_pipeline.sh to OUTPUT_DIR so that all
     # intermediate data (labels, cropped, features, motion) lands in the
-    # user-specified output directory rather than inside the repo tree.
-    # Falls back to the original relative path for local / manual runs.
+    # user-specified output directory.
     _agv_data_dir = os.environ.get('AGV_DATA_DIR')
     INPUT_ROOT = (
         Path(_agv_data_dir) / 'data_processed'
@@ -31,7 +30,7 @@ class Constants(object):
     CROPPED_FILE_PATH = INPUT_ROOT / DEVICE / 'cropped'
     FEATURE_FILE_PATH = INPUT_ROOT / DEVICE / 'features'
     MOTION_FILE_PATH  = INPUT_ROOT / DEVICE / 'motion'
-    # HR_FILE_PATH intentionally removed — actigraphy-only pipeline
+    # HR_FILE_PATH removed
 
     if not CROPPED_FILE_PATH.exists():
         CROPPED_FILE_PATH.mkdir(parents=True, exist_ok=True)

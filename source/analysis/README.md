@@ -34,8 +34,8 @@ Input: (batch, N_epochs, 30_fft_bins, 4_feature_types)
            ▼
 (batch, N_epochs, 2)   ← per-epoch sleep/wake probabilities
 ```
-
-The local LSTM captures the spectral signature of a single 30-second epoch; the global LSTM models how that signature evolves across the full night. Class-imbalance is handled via balanced class weights passed to `CrossEntropyLoss`.
+**Note:** In my understanding of the global-local LSTM
+The local LSTM captures the FFT signals of a 30-second epoch; the global LSTM models calculated across the full night. Class-imbalance is handled via balanced class weights passed to `CrossEntropyLoss`.
 
 ## Variable-length sequences
 

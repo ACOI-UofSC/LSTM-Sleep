@@ -1,6 +1,6 @@
 # source/analysis/classification/
 
-Orchestrates the full cross-validation loop: splits subjects into train/test folds, runs the training loop for each fold, computes permutation feature importance, and accumulates results.
+Orchestrates the full cross-validation loop: splits subjects into train/test folds, runs the training loop for each fold, computes permutation feature importance, and obtain results.
 
 ## Files
 
@@ -20,8 +20,6 @@ Two modes are available:
 | `build_leave_one_out()` | **Default.** LOSO with 65 subjects → 65 folds. Each fold trains on 64, tests on 1. |
 | `build_leave_multiple_out()` | k-fold CV (e.g., 10-fold). Uses `--no-loso` flag. |
 
-LOSO is preferred for small cohorts because it maximises training data per fold and produces an unbiased per-subject performance estimate.
-
 ## Feature importance (`classifier_service.py`)
 
 After each fold's training, permutation importance is estimated for each of the 4 feature channels:
@@ -33,20 +31,11 @@ After each fold's training, permutation importance is estimated for each of the 
    - Importance = baseline accuracy − permuted accuracy.
 3. Repeat 3 times and average.
 
-A positive importance score means the model relies on that channel's temporal pattern. A near-zero score means the model is robust to that channel being randomised.
+**Note:** Probably doesn't needed. The result wasn't as expected. The section was kept for the legacy purpose.
 
 ## Model checkpointing
 
 After `Trainer.fit()`, the best-validation-accuracy model state dict is deep-copied into `RawPerformance.model_state_dict`. The analysis runner then saves it to `models/fold_<subject>.pt`. This checkpoint can be loaded and applied to new subjects without re-training:
-
-```python
-import torch
-from source.analysis.model import LocalGlobalLSTM
-
-model = LocalGlobalLSTM(feature_dim=4, local_steps=30, n_class=2)
-model.load_state_dict(torch.load('models/fold_subject_001.pt'))
-model.eval()
-```
 
 ## `_FEATURE_NAMES`
 

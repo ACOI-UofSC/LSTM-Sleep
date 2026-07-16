@@ -38,7 +38,7 @@ splits = TrainTestSplitter.leave_one_out(subject_ids)
 splits = TrainTestSplitter.by_number(subject_ids, n_splits=10)
 ```
 
-> **Note:** The original codebase also contained `by_number_age()` which sorted subjects by age before stratifying. This was removed in this fork because age is not available in the AGV dataset and was not used as a model feature.
+> **Note:** The original codebase also contained `by_number_age()` which sorted subjects by age before stratifying. This was removed in this fork because age was not used as a model feature and was not powered to do so.
 
 ## Feature dictionary structure
 

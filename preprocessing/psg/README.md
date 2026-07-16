@@ -1,6 +1,6 @@
 # preprocessing/psg/
 
-Handles polysomnography (PSG) label loading, time-window cropping, and epoch-level data preparation. In this actigraphy-only fork, "PSG" refers to the ground-truth sleep/wake labels — they do not need to come from a clinical PSG system; any binary label file will work.
+Handles polysomnography (PSG) label loading, time-window cropping, and epoch-level data preparation.
 
 ## Files
 

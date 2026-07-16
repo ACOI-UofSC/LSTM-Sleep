@@ -50,8 +50,7 @@ class RawDataProcessor:
         PSGService.write(psg_raw_collection)
         MotionService.write(motion_collection)
         # HeartRateService.write removed — no HR in AGV pipeline
-
-        # All writes succeeded — touch the completion marker.
+        
         # crop_all will be skipped on any future re-run for this subject.
         RawDataProcessor._crop_done_marker(subject_id).touch()
 
