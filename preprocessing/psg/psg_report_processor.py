@@ -1,8 +1,10 @@
-import docx2txt as docx2txt
-
 from source import utils
 from preprocessing.psg.psg_file_type import PSGFileType
 from preprocessing.psg.report_summary import ReportSummary
+
+# docx2txt is NOT imported at module level — it is not installed in the AGV
+# environment and is not needed (PSG labels come from CSV, not DOCX reports).
+# The import is deferred inside get_summary_from_docx() for legacy compatibility.
 
 
 class PSGReportProcessor(object):
@@ -43,6 +45,7 @@ class PSGReportProcessor(object):
 
     @staticmethod
     def get_summary_from_docx(report_file_path):
+        import docx2txt  # lazy import — not installed in AGV environment
         report_text = docx2txt.process(report_file_path)
         report_split = report_text.split('DATE: ')
         date = report_split[1].split('\n')[0]

@@ -1,6 +1,17 @@
+from io import StringIO
 from pathlib import Path
 
 import numpy as np
+from pdfminer.converter import TextConverter
+from pdfminer.layout import LAParams
+from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
+from pdfminer.pdfpage import PDFPage
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
+
+from source.analysis.setup.attributed_classifier import AttributedClassifier
 from source.analysis.setup.feature_type import FeatureType
 
 
@@ -8,13 +19,38 @@ def get_project_root() -> Path:
     return Path(__file__).parent.parent
 
 
+
 def get_lstm_feature_fft30_sets():
-    # Heart rate removed — actigraphy-only (AGV) pipeline.
-    # feature_dim = len(feature_sets[0]) = 4  (x, y, z, vm)
-    # Model input shape per epoch: (30_fft_bins, 4_feature_types)
     return [
         [FeatureType.motion_xfft1_30, FeatureType.motion_yfft1_30, FeatureType.motion_zfft1_30,
-         FeatureType.motion_vmfft1_30]]
+         FeatureType.motion_vmfft1_30, FeatureType.heart_rate_fft1_30]]
+
+
+
+
+def convert_pdf_to_txt(pdf_path_string, all_texts):
+    resource_manager = PDFResourceManager()
+    returned_string = StringIO()
+    codec = 'utf-8'
+    layout_parameters = LAParams(all_texts=all_texts)
+    device = TextConverter(resource_manager, returned_string, codec=codec, laparams=layout_parameters)
+    fp = open(pdf_path_string, 'rb')
+    interpreter = PDFPageInterpreter(resource_manager, device)
+    password = ""
+    max_pages = 0
+    caching = True
+    page_numbers = set()
+
+    for page in PDFPage.get_pages(fp, page_numbers, maxpages=max_pages, password=password, caching=caching,
+                                  check_extractable=True):
+        interpreter.process_page(page)
+
+    text = returned_string.getvalue()
+
+    fp.close()
+    device.close()
+    returned_string.close()
+    return text
 
 
 def smooth_gauss(y, box_pts):

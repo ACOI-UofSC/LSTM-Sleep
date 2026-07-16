@@ -1,0 +1,10 @@
+/source/analysis/setup/__pycache__
+/source/analysis/classification/__pycache__
+/source/__pycache__
+/source/analysis/performance/__pycache__
+/source/analysis/__pycache__
+/preprocessing/psg/__pycache__
+/preprocessing/__pycache__
+
+/preprocessing/motion/__pycache__
+/preprocessing/motion_fft/__pycache__

@@ -1,5 +1,7 @@
+import os
 import time
 import sys
+from pathlib import Path
 import pandas as pd
 sys.path.append('..')
 from source.analysis.setup.subject_builder import SubjectBuilder
@@ -21,5 +23,14 @@ def run_preprocessing(subject_set):
 
 
 if __name__ == '__main__':
-    subject_ids = pd.read_csv(f'../data/{Constants.DEVICE}_ids.csv')['subject'].tolist()
+    # AGV_DATA_DIR is set by run_pipeline.sh to OUTPUT_DIR.
+    # agv_ids.csv is written there by data_ingestion.py (Step 1).
+    # Falls back to the original repo-relative path for local/manual runs.
+    _agv_data_dir = os.environ.get('AGV_DATA_DIR')
+    if _agv_data_dir:
+        ids_csv = Path(_agv_data_dir) / f'{Constants.DEVICE}_ids.csv'
+    else:
+        ids_csv = Path(f'../data/{Constants.DEVICE}_ids.csv')
+
+    subject_ids = pd.read_csv(ids_csv)['subject'].tolist()
     run_preprocessing(subject_ids)

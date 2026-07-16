@@ -63,23 +63,34 @@ class PSGService(object):
         data = []
         with open(psg_path, 'rt') as csv_file:
             file_reader = csv.reader(csv_file, delimiter=',', quotechar='|')
-            count = 0
-            rows_per_epoch = 1
-            next(file_reader)
-            for row in file_reader:
-                if count == 0:
-                    start_time = float(row[-1])
-                    start_score = int(row[2])
-                    epoch = Epoch(timestamp=start_time, index=1)
-                    data.append(StageItem(epoch=epoch, stage=PSGConverter.get_label_from_int(start_score)))
-                else:
-                    timestamp = start_time + count * 30
-                    score = int(row[2])
-                    epoch = Epoch(timestamp=timestamp,
-                                  index=(1 + int(np.floor(count / rows_per_epoch))))
+            next(file_reader)  # skip header
+            rows = list(file_reader)
 
-                    data.append(StageItem(epoch=epoch, stage=PSGConverter.get_label_from_int(score)))
-                count = count + 1
+        if len(rows) < 2:
+            return PSGRawDataCollection(subject_id=subject_id, data=data)
+
+        # Auto-detect how many sensor rows make up one 30-second PSG epoch.
+        # Label files from high-frequency devices (e.g. 50 Hz actigraphy) have
+        # one row per sensor sample, not one row per epoch.  The Time column
+        # (last column) stores elapsed seconds; two consecutive rows reveal the
+        # sampling interval.  For a 50 Hz file: 0.02 s/sample → 1500 rows/epoch.
+        # For an already-epoch-level file: ~30 s/row → rows_per_epoch = 1.
+        time_increment = float(rows[1][-1]) - float(rows[0][-1])
+        if 0 < time_increment < 30:
+            rows_per_epoch = max(1, round(30.0 / time_increment))
+        else:
+            rows_per_epoch = 1
+
+        # Stride through the rows, taking the first sample of each 30-s epoch.
+        epoch_rows = rows[::rows_per_epoch]
+        start_time = float(epoch_rows[0][-1])
+
+        for count, row in enumerate(epoch_rows):
+            score = int(row[2])
+            timestamp = start_time + count * 30
+            epoch = Epoch(timestamp=timestamp, index=(1 + count))
+            data.append(StageItem(epoch=epoch, stage=PSGConverter.get_label_from_int(score)))
+
         return PSGRawDataCollection(subject_id=subject_id, data=data)
 
     @staticmethod
